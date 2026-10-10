@@ -7,6 +7,7 @@
           <thead>
             <tr v-if="actionButtonsVisible">
               <th class="num" style="width: 5%;">#</th>
+              <th v-if="showMusicPic" :style="{ width: listItemHeight + 'px' }"></th>
               <th class="nobreak">{{ $t('music_name') }}</th>
               <th class="nobreak" style="width: 22%;">{{ $t('music_singer') }}</th>
               <th class="nobreak" style="width: 22%;">{{ $t('music_album') }}</th>
@@ -15,6 +16,7 @@
             </tr>
             <tr v-else>
               <th class="num" style="width: 5%;">#</th>
+              <th v-if="showMusicPic" :style="{ width: listItemHeight + 'px' }"></th>
               <th class="nobreak">{{ $t('music_name') }}</th>
               <th class="nobreak" style="width: 24%;">{{ $t('music_singer') }}</th>
               <th class="nobreak" style="width: 27%;">{{ $t('music_album') }}</th>
@@ -32,6 +34,7 @@
                 @click="handleListItemClick($event, index)" @contextmenu="handleListItemRightClick($event, index)"
               >
                 <div class="list-item-cell no-select num" style="flex: 0 0 5%;" @click.stop>{{ index + 1 }}</div>
+                <base-music-pic v-if="showMusicPic" :music-info="item" />
                 <div class="list-item-cell auto name">
                   <span class="select name" :aria-label="item.name">{{ item.name }}</span>
                   <span v-if="item.meta._qualitys.flac24bit" class="no-select badge badge-theme-primary">{{ $t('tag__lossless_24bit') }}</span>
@@ -60,6 +63,7 @@
                 @click="handleListItemClick($event, index)" @contextmenu="handleListItemRightClick($event, index)"
               >
                 <div class="list-item-cell no-select num" style="flex: 0 0 5%;" @click.stop>{{ index + 1 }}</div>
+                <base-music-pic v-if="showMusicPic" :music-info="item" />
                 <div class="list-item-cell auto name">
                   <span class="select name" :aria-label="item.name">{{ item.name }}</span>
                   <span v-if="item.meta._qualitys.flac24bit" class="no-select badge badge-theme-primary">{{ $t('tag__lossless_24bit') }}</span>
@@ -146,6 +150,7 @@ export default {
   emits: ['show-menu', 'play-list', 'togglePage'],
   setup(props, { emit }) {
     const actionButtonsVisible = appSetting['list.actionButtonsVisible']
+    const showMusicPic = appSetting['list.showMusicPic']
     const rightClickSelectedIndex = ref(-1)
     const dom_listContent = ref(null)
     const listRef = ref(null)
@@ -279,6 +284,7 @@ export default {
 
       scrollToTop,
       actionButtonsVisible,
+      showMusicPic,
     }
   },
 }

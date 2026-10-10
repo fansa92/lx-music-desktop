@@ -467,6 +467,7 @@
   "setting__is_show": "표시",
   "setting__list": "목록",
   "setting__list_action_btn": "목록 작업 버튼 표시",
+  "setting__list_music_pic": "노래 커버 표시",
   "setting__list_add_music_location_type": "목록에 곡 추가 시 위치",
   "setting__list_add_music_location_type_bottom": "맨 아래",
   "setting__list_add_music_location_type_top": "맨 위",

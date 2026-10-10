@@ -467,6 +467,7 @@
   "setting__is_show": "Show",
   "setting__list": "List",
   "setting__list_action_btn": "Show list action buttons",
+  "setting__list_music_pic": "Show song cover",
   "setting__list_add_music_location_type": "Position When Adding a Song to the List",
   "setting__list_add_music_location_type_bottom": "Bottom",
   "setting__list_add_music_location_type_top": "Top",

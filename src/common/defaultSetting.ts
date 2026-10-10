@@ -108,6 +108,7 @@ const defaultSetting: LX.AppSetting = {
   'list.isSaveScrollLocation': true,
   'list.addMusicLocationType': 'top',
   'list.actionButtonsVisible': false,
+  'list.showMusicPic': true,
 
   'download.enable': false,
   'download.isSavePathGroupByListName': false,

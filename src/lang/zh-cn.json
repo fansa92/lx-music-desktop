@@ -467,6 +467,7 @@
   "setting__is_show": "显示",
   "setting__list": "列表设置",
   "setting__list_action_btn": "显示列表操作按钮",
+  "setting__list_music_pic": "显示歌曲封面",
   "setting__list_add_music_location_type": "添加歌曲到列表时的位置",
   "setting__list_add_music_location_type_bottom": "底部",
   "setting__list_add_music_location_type_top": "顶部",

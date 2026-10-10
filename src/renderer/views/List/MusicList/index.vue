@@ -5,6 +5,7 @@
         <thead>
           <tr v-if="actionButtonsVisible">
             <th class="num" style="width: 5%;">#</th>
+            <th v-if="showMusicPic" :style="{ width: listItemHeight + 'px' }"></th>
             <th class="nobreak">{{ $t('music_name') }}</th>
             <th class="nobreak" style="width: 22%;">{{ $t('music_singer') }}</th>
             <th class="nobreak" style="width: 22%;">{{ $t('music_album') }}</th>
@@ -13,6 +14,7 @@
           </tr>
           <tr v-else>
             <th class="num" style="width: 5%;">#</th>
+            <th v-if="showMusicPic" :style="{ width: listItemHeight + 'px' }"></th>
             <th class="nobreak">{{ $t('music_name') }}</th>
             <th class="nobreak" style="width: 25%;">{{ $t('music_singer') }}</th>
             <th class="nobreak" style="width: 28%;">{{ $t('music_album') }}</th>
@@ -41,6 +43,7 @@
               <div v-else class="num">{{ index + 1 }}</div>
             </transition>
           </div>
+          <base-music-pic v-if="showMusicPic" :music-info="item" :list-id="listId" />
           <div class="list-item-cell auto name" :aria-label="item.name">
             <span class="select name">{{ item.name }}</span>
             <span v-if="isShowSource" class="no-select label-source">{{ item.source }}</span>
@@ -73,6 +76,7 @@
               <div v-else class="num">{{ index + 1 }}</div>
             </transition>
           </div>
+          <base-music-pic v-if="showMusicPic" :music-info="item" :list-id="listId" />
           <div class="list-item-cell auto name">
             <span class="select name" :aria-label="item.name">{{ item.name }}</span>
             <span v-if="isShowSource" class="no-select label-source">{{ item.source }}</span>
@@ -137,6 +141,7 @@ export default {
   emits: ['show-menu'],
   setup(props, { emit }) {
     const actionButtonsVisible = appSetting['list.actionButtonsVisible']
+    const showMusicPic = appSetting['list.showMusicPic']
 
     let scrollIndex = null
     let isAnimation = false
@@ -350,6 +355,7 @@ export default {
       handleRestoreScroll,
 
       actionButtonsVisible,
+      showMusicPic,
 
       isShowMusicToggleModal,
       selectedToggleMusicInfo,

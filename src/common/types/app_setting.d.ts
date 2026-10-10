@@ -496,6 +496,11 @@ declare global {
       'list.actionButtonsVisible': boolean
 
       /**
+       * 是否在列表中显示歌曲封面图片
+       */
+      'list.showMusicPic': boolean
+
+      /**
        * 是否启用下载功能
        */
       'download.enable': boolean
