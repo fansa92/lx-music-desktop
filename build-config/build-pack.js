@@ -1,8 +1,26 @@
 /* eslint-disable no-template-curly-in-string */
 
 const builder = require('electron-builder')
+const fs = require('node:fs')
+const path = require('node:path')
 const beforePack = require('./build-before-pack')
 const afterPack = require('./build-after-pack')
+
+const { version } = require('../package.json')
+
+/**
+ * 读取由 build-config/gen-release-notes.js 生成的更新日志
+ * @returns {string | null}
+ */
+const readReleaseNotes = () => {
+  const file = path.resolve(__dirname, '..', process.env.RELEASE_NOTES_FILE || 'RELEASE_NOTES.md')
+  try {
+    return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null
+  } catch (err) {
+    console.warn('[build-pack] 读取更新日志失败：', err.message)
+    return null
+  }
+}
 
 /**
 * @type {import('electron-builder').Configuration}
@@ -46,10 +64,17 @@ const options = {
   publish: [
     {
       provider: 'github',
-      owner: 'lyswhut',
-      repo: 'lx-music-desktop',
+      // 默认发布到本 fork（fansa92），可用环境变量覆盖：
+      //   PUBLISH_OWNER / PUBLISH_REPO / PUBLISH_RELEASE_TYPE(draft | prerelease | release)
+      owner: process.env.PUBLISH_OWNER || 'fansa92',
+      repo: process.env.PUBLISH_REPO || 'lx-music-desktop',
+      releaseType: process.env.PUBLISH_RELEASE_TYPE || 'prerelease',
     },
   ],
+  releaseInfo: {
+    releaseName: `v${version}`,
+    releaseNotes: readReleaseNotes() ?? undefined,
+  },
 }
 /**
  * @type {import('electron-builder').Configuration}

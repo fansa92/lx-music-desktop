@@ -63,8 +63,10 @@ typings/
 
 
 build
-
 dist
+
+# GitHub Release 说明（由 build-config/gen-release-notes.js 在 CI 中生成）
+RELEASE_NOTES.md
 
 publish/assets
 
