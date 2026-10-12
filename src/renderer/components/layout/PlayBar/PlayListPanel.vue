@@ -113,7 +113,9 @@ export default {
       listRef.value.scrollToIndex(Math.max(index - 2, 0))
     }
 
-    const close = () => setShowPlayListPanel(false)
+    const close = () => {
+      setShowPlayListPanel(false)
+    }
 
     const handlePlay = (index) => {
       const id = listId.value
