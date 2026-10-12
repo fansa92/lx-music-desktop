@@ -39,6 +39,16 @@
           <use xlink:href="#icon-nextMusic" />
         </svg>
       </div>
+      <div
+        :class="[$style.listBtn, { [$style.listBtnActive]: isShowPlayListPanel }]"
+        data-play-list-btn
+        :aria-label="$t('player__play_list')"
+        @click="togglePlayListPanel"
+      >
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" height="100%" viewBox="0 0 24 24" space="preserve">
+          <use xlink:href="#icon-play-list" />
+        </svg>
+      </div>
     </div>
   </div>
 </template>
@@ -64,6 +74,7 @@ import {
   setShowPlayerDetail,
 } from '@renderer/store/player/action'
 import { appSetting } from '@renderer/store/setting'
+import { isShowPlayListPanel, togglePlayListPanel } from '@renderer/utils/compositions/usePlayListPanel'
 import { togglePlay, playNext, playPrev } from '@renderer/core/player'
 import { LIST_IDS } from '@common/constants'
 import { formatMusicName } from '@renderer/utils'
@@ -139,6 +150,8 @@ export default {
       playPrev,
       handleToMusicLocation,
       isShowPlayerDetail,
+      isShowPlayListPanel,
+      togglePlayListPanel,
     }
   },
 }
@@ -320,6 +333,31 @@ export default {
   &:active {
     opacity: 0.6;
   }
+}
+
+.listBtn {
+  flex: none;
+  height: 44%;
+  transition: @transition-fast;
+  transition-property: color, opacity;
+  color: var(--color-button-font);
+  opacity: .6;
+  cursor: pointer;
+
+  svg {
+    fill: currentColor;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
+  }
+  &:hover {
+    opacity: 1;
+  }
+  &:active {
+    opacity: 0.8;
+  }
+}
+.listBtnActive {
+  opacity: 1;
+  color: var(--color-primary);
 }
 
 </style>
