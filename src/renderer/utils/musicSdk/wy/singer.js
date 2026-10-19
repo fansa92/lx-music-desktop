@@ -9,19 +9,20 @@ export default {
    */
   getInfo(id) {
     return eapiRequest('/api/artist/head/info/get', { id }).promise.then(({ body }) => {
-      if (!body || body.code != 200) throw new Error('get singer info faild.')
+      // 该接口实际返回结构为 body.data.artist（旧版为 body.artist），两种都兼容
+      const artist = (body && body.data && body.data.artist) || (body && body.artist)
+      if (!body || body.code != 200 || !artist) throw new Error('get singer info faild.')
       return {
         source: 'wy',
-        id: body.artist.id,
+        id: artist.id,
         info: {
-          name: body.artist.name,
-          desc: body.artist.briefDesc,
-          avatar: body.user.avatarUrl,
-          gender: body.user.gender === 1 ? 'man' : 'woman',
+          name: artist.name,
+          desc: artist.briefDesc,
+          avatar: artist.avatar || artist.cover || artist.picUrl,
         },
         count: {
-          music: body.artist.musicSize,
-          album: body.artist.albumSize,
+          music: artist.musicSize ?? 0,
+          album: artist.albumSize ?? 0,
         },
       }
     })
@@ -33,37 +34,38 @@ export default {
    * @param {*} limit
    */
   getSongList(id, page = 1, limit = 100) {
-    if (page === 1) page = 0
     return eapiRequest('/api/v2/artist/songs', {
       id,
       limit,
-      offset: limit * page,
+      offset: limit * (page - 1),
     }).promise.then(({ body }) => {
-      if (!body.songs || body.code != 200) throw new Error('get singer song list faild.')
+      if (!body || body.code != 200 || !Array.isArray(body.songs)) throw new Error('get singer song list faild.')
 
       const list = this.filterSongList(body.songs)
       return {
         list,
         limit,
         page,
-        total: body.total,
+        total: body.total ?? body.songs.length,
         source: 'wy',
       }
     })
   },
   async getArtistDetail(id, page = 1, limit = 100) {
-    if (page === 1) page = 0
+    // 该接口单次最多返回 200 条，这里一次取满并让 total == limit，
+    // 避免播放全部时逐页串行请求（歌手歌曲动辄上千首，会卡很久）
+    limit = 200
     const [songData, infoData] = await Promise.all([
-      this.getSongList(id, page, limit).catch(() => null),
+      this.getSongList(id, 1, limit).catch(() => null),
       this.getInfo(id).catch(() => null),
     ])
-    const info = infoData?.info || {}
-    const songData_ = songData || { list: [], page, limit, total: 0 }
+    const info = (infoData && infoData.info) || {}
+    const list = (songData && songData.list) || []
     return {
-      list: songData_.list,
-      page: songData_.page ?? page,
-      limit: songData_.limit ?? limit,
-      total: songData_.total ?? 0,
+      list,
+      page: 1,
+      limit: list.length || 1,
+      total: list.length,
       source: 'wy',
       info: {
         name: info.name || '',
@@ -123,7 +125,8 @@ export default {
       const types = []
       const _types = {}
       let size
-      item.privilege.chargeInfoList.forEach(i => {
+      const chargeInfoList = (item.privilege && item.privilege.chargeInfoList) || []
+      chargeInfoList.forEach(i => {
         switch (i.rate) {
           case 128000:
             size = item.lMusic ? sizeFormate(item.lMusic.size) : null
@@ -155,12 +158,13 @@ export default {
       list.push({
         singer: formatSingerName(item.artists),
         name: item.name,
-        albumName: item.album.name,
-        albumId: item.album.id,
+        albumName: (item.album && item.album.name) || '',
+        albumId: (item.album && item.album.id) || '',
         songmid: item.id,
         source: 'wy',
-        interval: formatPlayTime(item.duration),
-        img: null,
+        // 该接口的 duration 单位是毫秒，需先换算成秒
+        interval: formatPlayTime((item.duration || 0) / 1000),
+        img: (item.album && item.album.picUrl) || null,
         lrc: null,
         otherSource: null,
         types,

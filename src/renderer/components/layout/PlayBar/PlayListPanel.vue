@@ -59,7 +59,7 @@ import { computed, nextTick, ref, watch, onBeforeUnmount } from '@common/utils/v
 import { appSetting } from '@renderer/store/setting'
 import { playInfo, playMusicInfo } from '@renderer/store/player/state'
 import { downloadList } from '@renderer/store/download/state'
-import { getListMusics, removeListMusics } from '@renderer/store/list/action'
+import { getListMusics, getListMusicsFromCache, removeListMusics } from '@renderer/store/list/action'
 import { isFullscreen } from '@renderer/store'
 import { getFontSizeWithScreen } from '@renderer/utils'
 import { playList } from '@renderer/core/player'
@@ -75,7 +75,8 @@ export default {
     const list = ref([])
     let shouldScrollToCurrent = false
 
-    const listId = computed(() => playInfo.playerListId)
+    // playerListId 在某些播放路径下可能为空，兜底用当前播放歌曲所属的列表
+    const listId = computed(() => playInfo.playerListId || playMusicInfo.listId || null)
     // 下载列表的歌曲是 LX.Download.ListItem，删除走的是下载模块，这里不提供移除按钮
     const canRemove = computed(() => !!listId.value && listId.value != LIST_IDS.DOWNLOAD)
     const itemHeight = computed(() => Math.ceil((isFullscreen.value ? getFontSizeWithScreen() : appSetting['common.fontSize']) * 2.3))
@@ -103,7 +104,18 @@ export default {
         list.value = downloadList
         return
       }
-      list.value = await getListMusics(id)
+      // 与播放器播放时取列表的方式保持一致（同步缓存），保证拿到的就是当前播放的列表
+      let musics = getListMusicsFromCache(id)
+      if (!musics?.length) {
+        try {
+          musics = await getListMusics(id)
+        } catch (err) {
+          console.warn(err)
+        }
+      }
+      // 列表可能已经通过事件被更新过，这里再取一次缓存兜底
+      if (!musics?.length) musics = getListMusicsFromCache(id)
+      list.value = musics ?? []
     }
 
     const scrollToCurrent = () => {
@@ -154,6 +166,13 @@ export default {
         document.removeEventListener('click', handleOutsideClick, true)
         document.removeEventListener('keydown', handleKeydown)
       }
+    })
+
+    // 面板打开期间切换了播放列表时同步刷新
+    watch(listId, () => {
+      if (!visible.value) return
+      shouldScrollToCurrent = true
+      void loadList()
     })
 
     // 列表是异步拉取的，等虚拟列表渲染出内容高度后再滚动

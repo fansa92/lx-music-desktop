@@ -1,5 +1,5 @@
 import { httpFetch } from '../../request'
-import { decodeName } from '../../index'
+import { decodeName, formatPlayTime } from '../../index'
 import { formatSinger, objStr2JSON } from './util'
 
 export default {
@@ -40,7 +40,8 @@ export default {
         albumId: item.albumid,
         songmid: item.musicrid,
         source: 'kw',
-        interval: null,
+        // artist2music 返回的 duration 为秒数字符串
+        interval: formatPlayTime(parseInt(item.duration) || 0),
         img: item.img,
         lrc: null,
         otherSource: null,
@@ -52,23 +53,25 @@ export default {
   },
   getArtistDetail(id, page = 1, retryNum = 0) {
     if (retryNum > 2) return Promise.reject(new Error('try max num'))
-    const requestObj = httpFetch(`http://search.kuwo.cn/r.s?pn=${page - 1}&rn=${this.limit_song}&stype=artist2music&artistid=${id}&show_copyright_off=0&encoding=utf&vipver=MUSIC_9.1.0`)
+    const requestObj = httpFetch(`http://search.kuwo.cn/r.s?pn=0&rn=${this.limit_song}&stype=artist2music&artistid=${id}&show_copyright_off=0&encoding=utf&vipver=MUSIC_9.1.0`)
     return requestObj.promise.then(({ statusCode, body }) => {
       if (statusCode !== 200) return this.getArtistDetail(id, page, ++retryNum)
       body = objStr2JSON(body)
       if (!body.musiclist) return this.getArtistDetail(id, page, ++retryNum)
       const artistName = decodeName(body.artist)
+      const list = this.filterListDetail(body.musiclist)
       return this.getArtistInfo(id).then(artistInfo => ({
-        list: this.filterListDetail(body.musiclist),
-        page,
-        limit: this.limit_song,
-        total: parseInt(body.total) || body.musiclist.length,
+        list,
+        page: 1,
+        // 一次取满，让 total == limit，避免播放全部时逐页串联请求
+        limit: list.length || 1,
+        total: list.length,
         source: 'kw',
         info: {
-          name: artistName,
+          name: artistName || artistInfo.name,
           img: artistInfo.img || '',
           desc: '',
-          author: artistName,
+          author: artistName || artistInfo.name,
           play_count: '',
         },
       }))
@@ -78,9 +81,12 @@ export default {
     return httpFetch(`http://search.kuwo.cn/r.s?stype=artistinfo&artistid=${id}&rformat=json&encoding=utf8&plat=pc&devid=28156413`)
       .promise.then(({ body }) => {
         body = objStr2JSON(body)
+        // hts_pic 是完整地址；pic 是相对路径（如 120/s4s56/58/xxx.jpg），需补图片 host
+        let img = body.hts_pic || ''
+        if (!img && body.pic) img = `https://img1.kuwo.cn/star/starheads/${body.pic.replace(/^\/+/, '')}`
         return {
-          name: decodeName(body.artist || body.name),
-          img: body.img || body.pic || body.hts_PICPATH || '',
+          name: decodeName(body.name || body.artist),
+          img,
         }
       }).catch(() => ({ name: '', img: '' }))
   },

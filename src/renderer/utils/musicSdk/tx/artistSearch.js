@@ -40,18 +40,22 @@ export default {
       if (!req || req.code != 0) throw new Error('search artist failed')
       const singerData = req.data?.body?.singer
       const singerList = singerData?.list || []
+      // 该接口的歌手项字段为 singerName / singerPic / songNum（不是 name / img）
       return {
-        list: singerList.map(item => ({
-          play_count: formatPlayCount(0),
-          id: `artist__${item.singerMID}`,
-          author: item.name,
-          name: item.name,
-          time: '',
-          img: `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singerMID}.jpg`,
-          total: item.songNum ?? 0,
-          desc: '',
-          source: 'tx',
-        })),
+        list: singerList.map(item => {
+          const name = item.singerName || item.name || ''
+          return {
+            play_count: formatPlayCount(0),
+            id: `artist__${item.singerMID}`,
+            author: name,
+            name,
+            time: '',
+            img: item.singerPic || `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singerMID}.jpg`,
+            total: item.songNum ?? 0,
+            desc: '',
+            source: 'tx',
+          }
+        }),
         limit,
         total: singerData?.totalnum ?? singerList.length,
         source: 'tx',

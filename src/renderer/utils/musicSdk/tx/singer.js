@@ -227,8 +227,8 @@ export default {
   },
   async getArtistDetail(id, page = 1, limit = 100) {
     let rawList = []
-    let total = 0
     try {
+      // 该接口单页最多返回 100 条，一次取满并让 total == limit，避免播放全部时串行拉取多页
       const body = await createMusicuFetch({
         req: {
           module: 'musichall.song_list_server',
@@ -236,14 +236,13 @@ export default {
           param: {
             singerMid: id,
             order: 1,
-            begin: (page - 1) * limit,
+            begin: 0,
             num: limit,
           },
         },
       })
       if (body.req && body.req.code == 0 && body.req.data) {
         rawList = body.req.data.songList || []
-        total = body.req.data.totalNum || 0
       }
     } catch (err) {
       console.log(err)
@@ -257,9 +256,9 @@ export default {
     const singerMid = firstSinger ? firstSinger.mid || '' : ''
     return {
       list,
-      page,
-      limit,
-      total,
+      page: 1,
+      limit: list.length || 1,
+      total: list.length,
       source: 'tx',
       info: {
         name: singerName,
