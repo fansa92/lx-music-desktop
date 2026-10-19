@@ -4,6 +4,8 @@ import songList from './songList'
 import albumSearch from './albumSearch'
 import artistSearch from './artistSearch'
 import musicSearch from './musicSearch'
+import album from './album'
+import singer from './singer'
 import pic from './pic'
 import lyric from './lyric'
 import hotSearch from './hotSearch'
@@ -16,6 +18,8 @@ const mg = {
   albumSearch,
   artistSearch,
   musicSearch,
+  album,
+  singer,
   leaderboard,
   hotSearch,
   comment,

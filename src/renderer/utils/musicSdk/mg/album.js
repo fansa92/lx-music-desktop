@@ -9,6 +9,8 @@ export default {
    * @param {*} page
    */
   async getAlbumDetail(id, page = 1) {
+    // 数字专辑（咪咕数专）歌曲不下发，只能取到专辑信息
+    if (typeof id == 'string' && id.startsWith('dalbum__')) return this.getDAlbumDetail(id.slice(8), page)
     // 旧端点 queryAlbumSong（MIGUM2.0/app.c.nf）已失效（返回空 data），改用 MIGUM3.0 resource/album/song
     const data = await createHttpFetch(`https://app.c.nf.migu.cn/MIGUM3.0/resource/album/song/v2.0?albumId=${id}&pageNo=${page}&pageSize=200`)
     const rawList = (data && data.songList) || []
@@ -32,6 +34,30 @@ export default {
         desc: listInfo.desc || '',
         author: listInfo.author || '',
         play_count: listInfo.play_count || '',
+      },
+    }
+  },
+  /**
+   * 数字专辑详情：咪咕不下发数专歌曲（需购买），这里只返回专辑信息
+   * @param {string} id 数字专辑 id（不含 dalbum__ 前缀）
+   * @param {number} page
+   */
+  async getDAlbumDetail(id, page = 1) {
+    const info = await createHttpFetch(`https://app.u.nf.migu.cn/pc/resource/dalbum/v2.0?dAlbumId=${id}`)
+    if (!info) return Promise.reject(new Error('Get digital album info error.'))
+
+    return {
+      list: [],
+      page,
+      limit: 1,
+      total: 0,
+      source: 'mg',
+      info: {
+        name: info.title || '',
+        img: info.imgItem && info.imgItem.length ? info.imgItem[0].img : null,
+        desc: info.summary || '',
+        author: info.singer || '',
+        play_count: info.opNumItem && info.opNumItem.playNumDesc ? info.opNumItem.playNumDesc : '',
       },
     }
   },

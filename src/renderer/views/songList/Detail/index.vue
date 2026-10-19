@@ -166,6 +166,8 @@ export default {
     }
 
     const getAlbumRouteId = (item: AlbumItem) => {
+      // 部分源（如咪咕）返回的 id 已带详情路由前缀（album__ / dalbum__），直接用
+      if (typeof item.id == 'string' && /^(album|dalbum)__/.test(item.id)) return item.id
       // kw 专辑详情走 digest-13 路由，tx 需要用 albumMid
       if (source.value == 'kw') return `digest-13__${item.id}`
       if (source.value == 'tx') return `album__${item.mid ?? item.id}`
