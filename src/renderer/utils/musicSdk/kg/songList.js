@@ -739,7 +739,7 @@ export default {
   },
 
   async getListDetail(id, page) { // 获取歌曲列表内的音乐
-    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(8), page)
+    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(7), page)
     if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page)
     id = id.toString()
     if (id.includes('special/single/')) {

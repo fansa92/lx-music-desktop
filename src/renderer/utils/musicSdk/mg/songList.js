@@ -132,7 +132,7 @@ export default {
   },
 
   getListDetail(id, page, retryNum = 0) { // 获取歌曲列表内的音乐
-    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(8), page)
+    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(7), page)
     if (typeof id == 'string' && id.startsWith('artist__')) return Promise.reject(new Error('源暂不支持歌手详情'))
     // https://h5.nf.migu.cn/app/v4/p/share/playlist/index.html?id=184187437&channel=0146921
     // http://c.migu.cn/00bTY6?ifrom=babddaadfde4ebeda289d671ab62f236

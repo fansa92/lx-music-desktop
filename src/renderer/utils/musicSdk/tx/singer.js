@@ -84,7 +84,7 @@ const createMusicuFetch = async(data, options, retryNum = 0) => {
         ...data,
       },
       headers: {
-        'User-Angent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)',
       },
     }).promise
   } catch (err) {
@@ -138,11 +138,11 @@ export default {
         },
       },
     }).then(body => {
-      if (body.req_1.code != 0 || body.req_2 != 0 || body.req_3 != 0) throw new Error('get singer info faild.')
+      if ((body.req_1 && body.req_1.code != 0) || (body.req_2 && body.req_2.code != 0) || (body.req_3 && body.req_3.code != 0)) throw new Error('get singer info faild.')
 
       const info = body.req_1.data.singer_list[0]
       const music = body.req_3.data
-      const album = body.req_3.data
+      const album = body.req_2.data
       return {
         source: 'tx',
         id: info.basic_info.singer_mid,
@@ -226,23 +226,46 @@ export default {
     })
   },
   async getArtistDetail(id, page = 1, limit = 100) {
-    const [songData, infoData] = await Promise.all([
-      this.getSongList(id, page, limit).catch(() => null),
-      this.getInfo(id).catch(() => null),
-    ])
-    const info = infoData?.info || {}
-    const songData_ = songData || { list: [], page, limit, total: 0 }
+    let rawList = []
+    let total = 0
+    try {
+      const body = await createMusicuFetch({
+        req: {
+          module: 'musichall.song_list_server',
+          method: 'GetSingerSongList',
+          param: {
+            singerMid: id,
+            order: 1,
+            begin: (page - 1) * limit,
+            num: limit,
+          },
+        },
+      })
+      if (body.req && body.req.code == 0 && body.req.data) {
+        rawList = body.req.data.songList || []
+        total = body.req.data.totalNum || 0
+      }
+    } catch (err) {
+      console.log(err)
+    }
+    const list = rawList.map(item => filterMusicInfoItem(item.songInfo))
+    // 歌手信息接口 GetSingerDetail 目前要求登录（返回 code 104400），改为从歌曲列表推导歌手名与头像
+    let firstSinger = null
+    const firstSongInfo = rawList.length ? rawList[0].songInfo : null
+    if (firstSongInfo && firstSongInfo.singer && firstSongInfo.singer.length) firstSinger = firstSongInfo.singer[0]
+    const singerName = firstSinger ? firstSinger.name || '' : ''
+    const singerMid = firstSinger ? firstSinger.mid || '' : ''
     return {
-      list: songData_.list,
-      page: songData_.page ?? page,
-      limit: songData_.limit ?? limit,
-      total: songData_.total ?? 0,
+      list,
+      page,
+      limit,
+      total,
       source: 'tx',
       info: {
-        name: info.name || '',
-        img: info.avatar || '',
-        desc: info.desc || '',
-        author: info.name || '',
+        name: singerName,
+        img: singerMid ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${singerMid}.jpg` : '',
+        desc: '',
+        author: singerName,
         play_count: '',
       },
     }
@@ -263,9 +286,7 @@ export default {
     })
   },
   filterSongList(raw) {
-    raw.map(item => {
-      return filterMusicInfoItem(item.songInfo)
-    })
+    return (raw || []).map(item => filterMusicInfoItem(item.songInfo))
   },
 }
 

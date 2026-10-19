@@ -69,7 +69,7 @@ export default {
   },
   async getListDetail(rawId, page, tryNum = 0) { // 获取歌曲列表内的音乐
     if (tryNum > 2) return Promise.reject(new Error('try max num'))
-    if (typeof rawId == 'string' && rawId.startsWith('album__')) return album.getAlbumDetail(rawId.slice(8), page)
+    if (typeof rawId == 'string' && rawId.startsWith('album__')) return album.getAlbumDetail(rawId.slice(7), page)
     if (typeof rawId == 'string' && rawId.startsWith('artist__')) return singer.getArtistDetail(rawId.slice(8), page)
 
     const { id, cookie } = await this.getListId(rawId)
