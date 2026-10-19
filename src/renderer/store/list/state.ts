@@ -31,9 +31,13 @@ export {
 //   meta: {},
 // })
 
-export const tempListMeta = {
+/**
+ * 临时列表（TEMP）当前承载的来源列表 id，形如 `wy__album__xxx`。
+ * 设为响应式，播放列表面板等需要跟随「当前播放的是哪个专辑/歌单」刷新的地方才能监听到变化。
+ */
+export const tempListMeta = reactive({
   id: '',
-}
+})
 
 
 // export const userLists: LX.List.UserListInfo[] = window.lxData.userLists = reactive([])

@@ -60,6 +60,9 @@ import { appSetting } from '@renderer/store/setting'
 import { playInfo, playMusicInfo } from '@renderer/store/player/state'
 import { downloadList } from '@renderer/store/download/state'
 import { getListMusics, getListMusicsFromCache, removeListMusics } from '@renderer/store/list/action'
+import { tempListMeta } from '@renderer/store/list/state'
+import { getList } from '@renderer/store/player/action'
+import { getListDetail, getListDetailAll } from '@renderer/store/songList/action'
 import { isFullscreen } from '@renderer/store'
 import { getFontSizeWithScreen } from '@renderer/utils'
 import { playList } from '@renderer/core/player'
@@ -77,6 +80,20 @@ export default {
 
     // playerListId 在某些播放路径下可能为空，兜底用当前播放歌曲所属的列表
     const listId = computed(() => playInfo.playerListId ?? playMusicInfo.listId ?? null)
+    // 临时列表当前承载的来源列表（如 `wy__album__xxx`），播放专辑/歌单时由 setTempList 写入
+    const sourceListId = computed(() => tempListMeta.id ? tempListMeta.id : null)
+    const ONLINE_SOURCES = ['wy', 'tx', 'kg', 'kw', 'mg']
+    const parseOnlineListId = (id) => {
+      if (!id) return null
+      const index = id.indexOf('__')
+      if (index < 1) return null
+      const source = id.slice(0, index)
+      if (!ONLINE_SOURCES.includes(source)) return null
+      const innerId = id.slice(index + 2)
+      return innerId ? { source, id: innerId } : null
+    }
+    // 专辑详情统一用 `album__` / `digest-13__`（kw）前缀标记
+    const isAlbumListId = (id) => id.startsWith('album__') || id.startsWith('digest-13__')
     // 下载列表的歌曲是 LX.Download.ListItem，删除走的是下载模块，这里不提供移除按钮
     const canRemove = computed(() => !!listId.value && listId.value != LIST_IDS.DOWNLOAD)
     const itemHeight = computed(() => Math.ceil((isFullscreen.value ? getFontSizeWithScreen() : appSetting['common.fontSize']) * 2.3))
@@ -117,6 +134,27 @@ export default {
         list.value = downloadList
         return
       }
+      // 播放专辑时直接按专辑 id 取曲目（与歌单详情页同一套接口与缓存），
+      // 不依赖临时列表缓存，避免临时列表被其他列表覆盖后显示成别的歌曲
+      // 仅当播放队列确实是临时列表时才使用，避免残留的来源 id 干扰用户列表
+      const targetSourceListId = id == LIST_IDS.TEMP ? sourceListId.value : null
+      const onlineInfo = parseOnlineListId(targetSourceListId)
+      if (onlineInfo && isAlbumListId(onlineInfo.id)) {
+        try {
+          const result = await getListDetail(onlineInfo.id, onlineInfo.source, 1)
+          if (targetSourceListId != sourceListId.value) return
+          list.value = result.list ?? []
+          // 专辑曲目较多时会分页，后台补全剩余部分
+          if (result.total > (result.list?.length ?? 0)) {
+            const fullList = await getListDetailAll(onlineInfo.id, onlineInfo.source)
+            if (targetSourceListId != sourceListId.value) return
+            list.value = fullList
+          }
+          return
+        } catch (err) {
+          console.warn(err)
+        }
+      }
       // 与播放器播放时取列表的方式保持一致（同步缓存），保证拿到的就是当前播放的列表
       let musics = getListMusicsFromCache(id)
       if (!musics?.length) {
@@ -132,8 +170,12 @@ export default {
     }
 
     const scrollToCurrent = () => {
-      const index = playInfo.playerPlayIndex
-      if (index < 0 || !listRef.value) return
+      if (!listRef.value) return
+      // 列表可能来自专辑接口，优先按当前播放歌曲的 id 定位
+      const currentId = currentPlayId.value
+      let index = currentId == null ? -1 : list.value.findIndex(item => getMusicInfo(item).id == currentId)
+      if (index < 0) index = playInfo.playerPlayIndex
+      if (index < 0) return
       // 让当前播放的歌曲尽量居中显示
       listRef.value.scrollToIndex(Math.max(index - 2, 0))
     }
@@ -145,6 +187,16 @@ export default {
     const handlePlay = (index) => {
       const id = listId.value
       if (!id) return
+      const item = list.value[index]
+      const musicId = item ? getMusicInfo(item).id : null
+      // 列表可能来自专辑接口，按歌曲 id 在播放队列里定位，避免索引错位
+      if (musicId != null) {
+        const targetIndex = getList(id).findIndex(m => m.id == musicId)
+        if (targetIndex > -1) {
+          playList(id, targetIndex)
+          return
+        }
+      }
       playList(id, index)
     }
 
@@ -182,8 +234,10 @@ export default {
       }
     })
 
-    // 面板打开期间切换了播放列表时同步刷新
-    watch(listId, () => {
+    // 面板打开期间切换了播放列表时同步刷新；
+    // 播放队列一直是临时列表时 listId 不会变，还要跟着「临时列表承载的来源」刷新，
+    // 这样连着播放另一张专辑/另一个歌单时面板才会换成新列表
+    watch([listId, sourceListId], () => {
       if (!visible.value) return
       shouldScrollToCurrent = true
       void loadList()
