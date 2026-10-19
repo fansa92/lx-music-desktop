@@ -293,6 +293,7 @@
   "search__type_songlist": "Playlist",
   "search__type_album": "Album",
   "search__type_artist": "Artist",
+  "artist__songs": "All Songs",
   "artist__albums": "All Albums",
   "search__welcome": "Search what I want~~ 😉",
   "setting": "Settings",

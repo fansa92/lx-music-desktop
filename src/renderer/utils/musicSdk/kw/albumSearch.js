@@ -22,6 +22,8 @@ export default {
             id: `digest-13__${item.albumid}`,
             author: decodeName(item.artist),
             name: decodeName(item.name),
+            // albumlist 里发行时间在 pub 字段（showtime 为上线时间，格式相同）
+            time: item.pub || item.showtime || '',
             total: parseInt(item.musiccnt) || 0,
             img: item.img || item.hts_img,
             desc: decodeName(item.info),

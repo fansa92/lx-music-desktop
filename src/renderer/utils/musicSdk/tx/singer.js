@@ -96,6 +96,11 @@ const createMusicuFetch = async(data, options, retryNum = 0) => {
   return result.body
 }
 
+/**
+ * 从歌曲列表推导出的歌手信息缓存，key 为 singerMid
+ */
+const singerInfoCache = {}
+
 export default {
   /**
    * 获取歌手信息
@@ -227,8 +232,9 @@ export default {
   },
   async getArtistDetail(id, page = 1, limit = 100) {
     let rawList = []
+    let total = 0
     try {
-      // 该接口单页最多返回 100 条，一次取满并让 total == limit，避免播放全部时串行拉取多页
+      // 按页取，total 用接口返回的 totalNum，详情页据此分页
       const body = await createMusicuFetch({
         req: {
           module: 'musichall.song_list_server',
@@ -236,37 +242,47 @@ export default {
           param: {
             singerMid: id,
             order: 1,
-            begin: 0,
+            begin: (page - 1) * limit,
             num: limit,
           },
         },
       })
       if (body.req && body.req.code == 0 && body.req.data) {
         rawList = body.req.data.songList || []
+        total = body.req.data.totalNum || rawList.length
       }
     } catch (err) {
       console.log(err)
     }
     const list = rawList.map(item => filterMusicInfoItem(item.songInfo))
-    // 歌手信息接口 GetSingerDetail 目前要求登录（返回 code 104400），改为从歌曲列表推导歌手名与头像
-    let firstSinger = null
-    const firstSongInfo = rawList.length ? rawList[0].songInfo : null
-    if (firstSongInfo && firstSongInfo.singer && firstSongInfo.singer.length) firstSinger = firstSongInfo.singer[0]
-    const singerName = firstSinger ? firstSinger.name || '' : ''
-    const singerMid = firstSinger ? firstSinger.mid || '' : ''
-    // 简介走单独的 fcg 接口（XML），GetSingerDetail 拿不到
-    const desc = await this.getDesc(singerMid || id).catch(() => '')
-    return {
-      list,
-      page: 1,
-      limit: list.length || 1,
-      total: list.length,
-      source: 'tx',
-      info: {
+    // 歌手信息接口 GetSingerDetail 目前要求登录（返回 code 104400），改为从歌曲列表推导歌手名与头像。
+    // 推导结果缓存起来，翻到后面几页时仍能显示歌手名/头像/简介，也避免重复请求简介接口
+    let info = singerInfoCache[id]
+    if (!info) {
+      let firstSinger = null
+      const firstSongInfo = rawList.length ? rawList[0].songInfo : null
+      if (firstSongInfo && firstSongInfo.singer && firstSongInfo.singer.length) firstSinger = firstSongInfo.singer[0]
+      const singerName = firstSinger ? firstSinger.name || '' : ''
+      const singerMid = firstSinger ? firstSinger.mid || '' : ''
+      // 简介走单独的 fcg 接口（XML），GetSingerDetail 拿不到
+      info = {
         name: singerName,
         img: singerMid ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${singerMid}.jpg` : '',
-        desc,
-        author: singerName,
+        desc: await this.getDesc(singerMid || id).catch(() => ''),
+      }
+      if (info.name) singerInfoCache[id] = info
+    }
+    return {
+      list,
+      page,
+      limit,
+      total,
+      source: 'tx',
+      info: {
+        name: info.name,
+        img: info.img,
+        desc: info.desc,
+        author: info.name,
         play_count: '',
       },
     }

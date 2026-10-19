@@ -13,7 +13,7 @@
         </header>
         <div :class="$style.body">
           <div v-if="!list.length" :class="$style.empty">{{ $t('no_item') }}</div>
-          <div v-else :class="$style.listWrap">
+          <div v-else :class="$style.listWrap" :style="listWrapStyle">
             <base-virtualized-list
               ref="listRef"
               v-slot="{ item, index }"
@@ -93,6 +93,19 @@ export default {
       return item.id == id || getMusicInfo(item).id == id
     }
 
+    // 虚拟列表需要父容器有确定高度：按「可见行数 × 行高」给列表容器算高度，
+    // 否则容器会被绝对定位的子元素撑成 0，面板就只剩标题和数量能显示
+    const maxRows = ref(10)
+    const updateMaxRows = () => {
+      const rootHeight = document.getElementById('root')?.clientHeight ?? window.innerHeight
+      // 面板最大高度是 62%，再减去 header 的 36px
+      const availHeight = Math.max(Math.floor(rootHeight * 0.62) - 36, itemHeight.value * 3)
+      maxRows.value = Math.max(Math.floor(availHeight / itemHeight.value), 3)
+    }
+    const listWrapStyle = computed(() => ({
+      height: Math.min(list.value.length, maxRows.value) * itemHeight.value + 'px',
+    }))
+
     const loadList = async() => {
       const id = listId.value
       if (!id) {
@@ -156,6 +169,7 @@ export default {
       if (val) {
         // 每次打开都重新定位到当前播放的歌曲
         shouldScrollToCurrent = true
+        updateMaxRows()
         void loadList()
         // 延迟绑定，避免打开面板的那一次点击立刻触发关闭
         setTimeout(() => {
@@ -193,6 +207,7 @@ export default {
       listRef,
       list,
       itemHeight,
+      listWrapStyle,
       canRemove,
       getMusicInfo,
       isCurrentPlay,
@@ -274,16 +289,15 @@ export default {
   position: relative;
   display: flex;
   flex-flow: column nowrap;
+  overflow: hidden;
 }
 
-// 虚拟列表的内容是绝对定位的，这里用绝对定位的容器给它一个确定的高度，
-// 避免 height: 100% 在 flex 布局里退化成 0
+// 虚拟列表的内容是绝对定位的，容器必须有确定高度，高度由 listWrapStyle 按可见行数算出
 .listWrap {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  flex: none;
+  width: 100%;
+  overflow: hidden;
 }
 
 .empty {

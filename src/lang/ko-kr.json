@@ -293,6 +293,7 @@
   "search__type_songlist": "재생목록",
   "search__type_album": "앨범",
   "search__type_artist": "아티스트",
+  "artist__songs": "전체 곡",
   "artist__albums": "전체 앨범",
   "search__welcome": "원하는 것을 검색해보세요~~ 😉",
   "setting": "설정",

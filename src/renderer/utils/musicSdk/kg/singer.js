@@ -68,20 +68,19 @@ export default {
       total: body.total,
     }
   },
-  async getArtistDetail(id, page = 1, limit = 500) {
-    // 一次取满（500 首），让 total == limit，避免播放全部时逐页串行请求
-    limit = 500
+  async getArtistDetail(id, page = 1, limit = 100) {
+    // 按页取（pagesize 上限 100），total 用接口的真实总数，详情页据此分页
     const [songData, infoData] = await Promise.all([
-      this.getSongList(id, 1, limit).catch(() => null),
+      this.getSongList(id, page, limit).catch(() => null),
       this.getInfo(id).catch(() => null),
     ])
-    const info = infoData?.info || {}
+    const info = (infoData && infoData.info) || {}
     const list = (songData && songData.list) || []
     return {
       list,
-      page: 1,
-      limit: list.length || 1,
-      total: list.length,
+      page,
+      limit,
+      total: (songData && songData.total) ?? list.length,
       source: 'kg',
       info: {
         name: info.name || '',

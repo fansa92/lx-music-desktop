@@ -52,20 +52,18 @@ export default {
     })
   },
   async getArtistDetail(id, page = 1, limit = 100) {
-    // 该接口单次最多返回 200 条，这里一次取满并让 total == limit，
-    // 避免播放全部时逐页串行请求（歌手歌曲动辄上千首，会卡很久）
-    limit = 200
+    // 单页返回 limit 条，total 为接口给的真实总数，详情页据此分页，避免一次拉上千首
     const [songData, infoData] = await Promise.all([
-      this.getSongList(id, 1, limit).catch(() => null),
+      this.getSongList(id, page, limit).catch(() => null),
       this.getInfo(id).catch(() => null),
     ])
     const info = (infoData && infoData.info) || {}
     const list = (songData && songData.list) || []
     return {
       list,
-      page: 1,
-      limit: list.length || 1,
-      total: list.length,
+      page,
+      limit,
+      total: (songData && songData.total) ?? list.length,
       source: 'wy',
       info: {
         name: info.name || '',

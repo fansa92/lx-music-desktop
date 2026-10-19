@@ -300,10 +300,10 @@ export default {
     }
   },
   // 获取歌曲列表内的音乐
-  async getListDetail(id, tryNum = 0) {
+  async getListDetail(id, page = 1, tryNum = 0) {
     if (tryNum > 2) return Promise.reject(new Error('try max num'))
     if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(7))
-    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8))
+    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page)
 
     id = await this.getListId(id)
 
@@ -316,7 +316,7 @@ export default {
     const { body } = await requestObj_listDetail.promise
 
     // console.log(body)
-    if (body.code !== this.successCode) return this.getListDetail(id, ++tryNum)
+    if (body.code !== this.successCode) return this.getListDetail(id, page, ++tryNum)
     if (body.subcode !== this.successCode || !body.cdlist) return this.getListDetail2(id)
     const cdlist = body.cdlist[0]
     return {

@@ -293,6 +293,7 @@
   "search__type_songlist": "歌單",
   "search__type_album": "專輯",
   "search__type_artist": "歌手",
+  "artist__songs": "所有歌曲",
   "artist__albums": "所有專輯",
   "search__welcome": "搜我所想~~😉",
   "setting": "設定",

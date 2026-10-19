@@ -299,7 +299,6 @@ export default {
       if (props.list.length) {
         void nextTick(() => {
           requestAnimationFrame(() => {
-            console.log('updateView')
             updateView()
           })
         })

@@ -26,20 +26,15 @@
         <base-btn :class="$style.headerRightBtn" @click="handleBack">{{ $t('back') }}</base-btn>
       </div>
     </div>
-    <div v-if="isArtist && albums.length" :class="$style.albumSection">
-      <div :class="$style.albumTitle">{{ $t('artist__albums') }}（{{ albums.length }}）</div>
-      <div :class="[$style.albumList, 'scroll']">
-        <div v-for="album in albums" :key="album.id" :class="$style.albumItem" @click="toAlbum(album)">
-          <img :class="$style.albumImg" loading="lazy" decoding="async" :src="album.img">
-          <p :class="$style.albumName" :title="album.name">{{ album.name }}</p>
-          <p :class="$style.albumMeta">
-            <span v-if="album.time">{{ album.time }}</span>
-            <span v-if="album.count"><svg-icon name="music" />{{ album.count }}</span>
-          </p>
-        </div>
-      </div>
+    <div v-if="showTabs" :class="$style.tabs">
+      <button type="button" :class="[$style.tabItem, { [$style.tabActive]: tab == 'song' }]" @click="setTab('song')">
+        {{ $t('artist__songs') }}<span v-if="listDetailInfo.total" :class="$style.tabCount">{{ listDetailInfo.total }}</span>
+      </button>
+      <button type="button" :class="[$style.tabItem, { [$style.tabActive]: tab == 'album' }]" @click="setTab('album')">
+        {{ $t('artist__albums') }}<span :class="$style.tabCount">{{ albums.length }}</span>
+      </button>
     </div>
-    <div :class="$style.list">
+    <div v-show="!showTabs || tab == 'song'" :class="$style.list">
       <material-online-list
         ref="listRef"
         :page="listDetailInfo.page"
@@ -50,6 +45,18 @@
         @play-list="handlePlayList"
         @toggle-page="togglePage"
       />
+    </div>
+    <div v-if="showTabs" v-show="tab == 'album'" :class="[$style.albumPanel, 'scroll']">
+      <div :class="$style.albumGrid">
+        <div v-for="album in albums" :key="album.id" :class="$style.albumItem" @click="toAlbum(album)">
+          <img :class="$style.albumImg" loading="lazy" decoding="async" :src="album.img">
+          <p :class="$style.albumName" :title="album.name">{{ album.name }}</p>
+          <p :class="$style.albumMeta">
+            <span v-if="album.time">{{ album.time }}</span>
+            <span v-if="album.count"><svg-icon name="music" />{{ album.count }}</span>
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -151,6 +158,12 @@ export default {
     }
     const albums = ref<Array<{ id: string, name: string, img: string, count: number | null, time: string }>>([])
     const isArtist = computed(() => typeof id.value == 'string' && id.value.startsWith('artist__'))
+    // 歌手详情有专辑数据时才显示自定义页签，歌单/专辑详情保持原样
+    const showTabs = computed(() => isArtist.value && albums.value.length > 0)
+    const tab = ref<'song' | 'album'>('song')
+    const setTab = (val: 'song' | 'album') => {
+      tab.value = val
+    }
 
     const getAlbumRouteId = (item: AlbumItem) => {
       // kw 专辑详情走 digest-13 路由，tx 需要用 albumMid
@@ -199,11 +212,8 @@ export default {
 
     watch([source, id, page, refresh], async([_source, _id, _page, _refresh]) => {
       if (!_source || !_id) return router.replace({ path: '/songList/list' })
-      // console.log(_source, _id, _page, _refresh, picUrl.value)
-      // source.value = _source
-      // id.value = _id
-      // refresh.value = _refresh
-      // page.value = _page ?? 1
+      // 切歌手/换页时回到「所有歌曲」页签
+      tab.value = 'song'
       void getListData(_source, _id, _page, _refresh)
       void loadAlbums()
     }, {
@@ -217,6 +227,9 @@ export default {
       picUrl,
       albums,
       isArtist,
+      showTabs,
+      tab,
+      setTab,
       toAlbum,
       listDetailInfo,
       listRef,
@@ -311,27 +324,65 @@ export default {
   }
 }
 
-.albumSection {
+.tabs {
   flex: none;
-  padding: 0 15px;
-}
-.albumTitle {
-  font-size: 12px;
-  line-height: 1.4;
-  padding-bottom: 6px;
-  color: var(--color-font-label);
-}
-.albumList {
   display: flex;
   flex-flow: row nowrap;
-  gap: 12px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 10px;
+  gap: 10px;
+  padding: 2px 15px 8px;
+  border-bottom: 1px solid var(--color-primary-alpha-900);
+  margin-bottom: 4px;
+}
+.tabItem {
+  position: relative;
+  padding: 4px 2px;
+  border: none;
+  background-color: transparent;
+  font-size: 13px;
+  color: var(--color-font-label);
+  cursor: pointer;
+  transition: color @transition-normal;
+
+  &:hover {
+    color: var(--color-font);
+  }
+}
+.tabActive {
+  color: var(--color-primary);
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -9px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--color-primary);
+  }
+}
+.tabCount {
+  margin-left: 4px;
+  font-size: 11px;
+  opacity: .8;
+}
+
+.albumPanel {
+  flex: auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 15px 0;
+}
+.albumGrid {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  gap: 14px;
+  padding-bottom: 15px;
 }
 .albumItem {
   flex: none;
-  width: 84px;
+  width: 100px;
   cursor: pointer;
   transition: opacity @transition-normal;
   &:hover {
@@ -340,8 +391,8 @@ export default {
 }
 .albumImg {
   display: block;
-  width: 84px;
-  height: 84px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   border-radius: 4px;
   background-color: var(--color-000);

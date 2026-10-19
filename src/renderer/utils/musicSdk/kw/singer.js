@@ -3,7 +3,8 @@ import { decodeName, formatPlayTime } from '../../index'
 import { formatSinger, objStr2JSON } from './util'
 
 export default {
-  limit_song: 1000,
+  // 单页条数：artist2music 支持 pn/rn 分页，详情页据此分页
+  limit_song: 100,
   filterListDetail(rawList) {
     return rawList.map((item) => {
       let formats = item.formats.split('|')
@@ -53,19 +54,19 @@ export default {
   },
   getArtistDetail(id, page = 1, retryNum = 0) {
     if (retryNum > 2) return Promise.reject(new Error('try max num'))
-    const requestObj = httpFetch(`http://search.kuwo.cn/r.s?pn=0&rn=${this.limit_song}&stype=artist2music&artistid=${id}&show_copyright_off=0&encoding=utf&vipver=MUSIC_9.1.0`)
+    const requestObj = httpFetch(`http://search.kuwo.cn/r.s?pn=${page - 1}&rn=${this.limit_song}&stype=artist2music&artistid=${id}&show_copyright_off=0&encoding=utf&vipver=MUSIC_9.1.0`)
     return requestObj.promise.then(({ statusCode, body }) => {
       if (statusCode !== 200) return this.getArtistDetail(id, page, ++retryNum)
       body = objStr2JSON(body)
       if (!body.musiclist) return this.getArtistDetail(id, page, ++retryNum)
       const artistName = decodeName(body.artist)
       const list = this.filterListDetail(body.musiclist)
+      const total = parseInt(body.total) || list.length
       return this.getArtistInfo(id).then(artistInfo => ({
         list,
-        page: 1,
-        // 一次取满，让 total == limit，避免播放全部时逐页串联请求
-        limit: list.length || 1,
-        total: list.length,
+        page,
+        limit: this.limit_song,
+        total,
         source: 'kw',
         info: {
           name: artistName || artistInfo.name,
