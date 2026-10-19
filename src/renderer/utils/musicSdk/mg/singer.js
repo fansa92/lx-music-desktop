@@ -90,14 +90,25 @@ export default {
   },
 
   /**
+   * 歌手简介：V5 歌手详情页不含简介，从歌手搜索接口按名字取 summary（用 singerId 精确匹配）
+   */
+  async getDesc(id, name) {
+    if (!name) return ''
+    const data = await createHttpFetch(`${BASE}/pc/resource/search/singer/v1.0?text=${encodeURIComponent(name)}`)
+    const item = (data ?? []).find(it => String(it.singerId) == String(id))
+    return item?.summary ?? ''
+  },
+
+  /**
    * 歌手详情（详情页复用歌单详情页）
    * @param {string} id 歌手 id（不含 artist__ 前缀）
    * @param {number} page 页码
    */
   async getArtistDetail(id, page = 1) {
-    const [info, list] = await Promise.all([
-      this.getInfo(id).catch(() => null),
+    const info = await this.getInfo(id).catch(() => null)
+    const [list, desc] = await Promise.all([
       this.getSongList(id, page).catch(() => []),
+      this.getDesc(id, info?.name).catch(() => ''),
     ])
 
     return {
@@ -109,7 +120,7 @@ export default {
       info: {
         name: info?.name ?? '',
         img: info?.img ?? '',
-        desc: '',
+        desc,
         author: info?.name ?? '',
         play_count: '',
       },
