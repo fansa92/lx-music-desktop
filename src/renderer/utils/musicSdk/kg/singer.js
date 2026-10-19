@@ -97,10 +97,14 @@ export default {
       return {
         id: item.albumid,
         count: item.songcount,
+        time: (item.publishtime || '').slice(0, 10),
         info: {
           name: item.albumname,
           author: item.singername,
-          img: item.replaceAll('{size}', '480'),
+          // 此前这里误把整个对象当成字符串处理，导致图片地址出错
+          img: item.imgurl
+            ? item.imgurl.replace('{size}', '480')
+            : `https://imge.kugou.com/soft/collection/${item.albumid}.jpg`,
           desc: item.intro,
         },
       }

@@ -12,7 +12,8 @@
               <p :class="$style.author">{{ item.author }}</p>
               <p v-if="item.time" :class="$style.time">{{ item.time }}</p>
               <div :class="$style.songlist_info">
-                <span v-if="item.total != null"><svg-icon name="music" />{{ item.total }}</span>
+                <span v-if="item.total != null && item.total !== ''"><svg-icon name="music" />{{ item.total }}</span>
+                <span v-if="item.album_total != null && item.album_total !== ''"><svg-icon name="disc" />{{ item.album_total }}</span>
                 <span v-if="item.play_count != null"><svg-icon name="headphones" />{{ item.play_count }}</span>
                 <span v-if="visibleSource">{{ item.source }}</span>
               </div>

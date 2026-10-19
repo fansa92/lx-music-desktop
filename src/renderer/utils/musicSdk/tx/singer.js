@@ -254,6 +254,8 @@ export default {
     if (firstSongInfo && firstSongInfo.singer && firstSongInfo.singer.length) firstSinger = firstSongInfo.singer[0]
     const singerName = firstSinger ? firstSinger.name || '' : ''
     const singerMid = firstSinger ? firstSinger.mid || '' : ''
+    // 简介走单独的 fcg 接口（XML），GetSingerDetail 拿不到
+    const desc = await this.getDesc(singerMid || id).catch(() => '')
     return {
       list,
       page: 1,
@@ -263,11 +265,29 @@ export default {
       info: {
         name: singerName,
         img: singerMid ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${singerMid}.jpg` : '',
-        desc: '',
+        desc,
         author: singerName,
         play_count: '',
       },
     }
+  },
+  /**
+   * 获取歌手简介
+   * 该接口只支持 xml 输出（format=json 会返回 no supply）
+   * @param {*} singerMid
+   */
+  getDesc(singerMid) {
+    if (!singerMid) return Promise.resolve('')
+    return httpFetch(`https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_singer_desc.fcg?singermid=${singerMid}&outCharset=utf-8&format=xml&r=1`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        Referer: `https://y.qq.com/n/ryqq/singer/${singerMid}`,
+      },
+    }).promise.then(({ body }) => {
+      if (typeof body != 'string') return ''
+      const res = /<desc><!\[CDATA\[([\s\S]*?)\]\]><\/desc>/.exec(body)
+      return res ? res[1].trim() : ''
+    }).catch(() => '')
   },
   filterAlbumList(raw) {
     return raw.map(item => {
@@ -275,6 +295,7 @@ export default {
         id: item.albumID,
         mid: item.albumMid,
         count: item.totalNum,
+        time: item.publishDate,
         info: {
           name: item.albumName,
           author: item.singerName,

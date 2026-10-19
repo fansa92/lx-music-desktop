@@ -8,6 +8,8 @@ import pic from './pic'
 import lyric from './lyric'
 import hotSearch from './hotSearch'
 import comment from './comment'
+import album from './album'
+import singer from './singer'
 // import tipSearch from './tipSearch'
 
 const kg = {
@@ -16,6 +18,8 @@ const kg = {
   songList,
   albumSearch,
   artistSearch,
+  album,
+  singer,
   musicSearch,
   hotSearch,
   comment,

@@ -1,5 +1,5 @@
 import { eapiRequest } from './utils/index'
-import { formatPlayTime, sizeFormate } from '../../index'
+import { formatPlayTime, sizeFormate, dateFormat } from '../../index'
 import { formatSingerName } from '../utils'
 
 export default {
@@ -87,7 +87,7 @@ export default {
     return eapiRequest(`/api/artist/albums/${id}`, {
       limit,
       offset: limit * page,
-    }).then(({ body }) => {
+    }).promise.then(({ body }) => {
       if (!body.hotAlbums || body.code != 200) throw new Error('get singer album list faild.')
 
       const list = this.filterAlbumList(body.hotAlbums)
@@ -107,6 +107,7 @@ export default {
       list.push({
         id: item.id,
         count: item.size,
+        time: item.publishTime ? dateFormat(item.publishTime, 'Y-M-D') : '',
         info: {
           name: item.name,
           author: formatSingerName(item.artists),

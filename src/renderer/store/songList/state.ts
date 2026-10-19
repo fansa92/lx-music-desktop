@@ -49,6 +49,10 @@ export interface ListInfoItem {
   desc: string | null
   source: LX.OnlineSource
   total?: string
+  /**
+   * 专辑数量（歌手搜索结果使用）
+   */
+  album_total?: string | number | null
 }
 export interface ListInfo {
   list: ListInfoItem[]

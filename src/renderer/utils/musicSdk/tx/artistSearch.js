@@ -1,5 +1,4 @@
 import { signRequest } from './utils'
-import { formatPlayCount } from '../../index'
 
 export default {
   limit: 20,
@@ -45,13 +44,14 @@ export default {
         list: singerList.map(item => {
           const name = item.singerName || item.name || ''
           return {
-            play_count: formatPlayCount(0),
+            play_count: null,
             id: `artist__${item.singerMID}`,
             author: name,
             name,
             time: '',
             img: item.singerPic || `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singerMID}.jpg`,
             total: item.songNum ?? 0,
+            album_total: item.albumNum ?? 0,
             desc: '',
             source: 'tx',
           }

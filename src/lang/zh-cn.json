@@ -293,6 +293,7 @@
   "search__type_songlist": "歌单",
   "search__type_album": "专辑",
   "search__type_artist": "歌手",
+  "artist__albums": "所有专辑",
   "search__welcome": "搜我所想~~😉",
   "setting": "设置",
   "setting__about": "关于 LX Music",

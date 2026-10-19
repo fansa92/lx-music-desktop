@@ -1,5 +1,4 @@
 import { createHttpFetch } from './utils'
-import { formatPlayCount } from '../../index'
 
 export default {
   limit: 20,
@@ -10,13 +9,14 @@ export default {
         const result = body.albumResultData.result || []
         return {
           list: result.map(item => ({
-            play_count: formatPlayCount(0),
+            play_count: null,
             id: `album__${item.id}`,
             author: item.singer,
             name: item.name,
             time: item.publishDate,
             img: item.imgItems?.length ? item.imgItems[0].img : null,
-            total: 0,
+            // mg 搜索结果不带歌曲数（需逐个查专辑详情），这里留空避免显示错误的 0
+            total: null,
             desc: item.desc,
             source: 'mg',
           })),

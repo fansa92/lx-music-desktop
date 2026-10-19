@@ -7,6 +7,8 @@ import musicSearch from './musicSearch'
 import { apis } from '../api-source'
 import hotSearch from './hotSearch'
 import comment from './comment'
+import album from './album'
+import singer from './singer'
 // import tipSearch from './tipSearch'
 
 const tx = {
@@ -15,6 +17,8 @@ const tx = {
   songList,
   albumSearch,
   artistSearch,
+  album,
+  singer,
   musicSearch,
   hotSearch,
   comment,

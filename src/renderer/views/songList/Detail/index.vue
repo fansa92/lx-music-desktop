@@ -26,6 +26,19 @@
         <base-btn :class="$style.headerRightBtn" @click="handleBack">{{ $t('back') }}</base-btn>
       </div>
     </div>
+    <div v-if="isArtist && albums.length" :class="$style.albumSection">
+      <div :class="$style.albumTitle">{{ $t('artist__albums') }}（{{ albums.length }}）</div>
+      <div :class="[$style.albumList, 'scroll']">
+        <div v-for="album in albums" :key="album.id" :class="$style.albumItem" @click="toAlbum(album)">
+          <img :class="$style.albumImg" loading="lazy" decoding="async" :src="album.img">
+          <p :class="$style.albumName" :title="album.name">{{ album.name }}</p>
+          <p :class="$style.albumMeta">
+            <span v-if="album.time">{{ album.time }}</span>
+            <span v-if="album.count"><svg-icon name="music" />{{ album.count }}</span>
+          </p>
+        </div>
+      </div>
+    </div>
     <div :class="$style.list">
       <material-online-list
         ref="listRef"
@@ -42,10 +55,11 @@
 </template>
 
 <script lang="ts">
-import { ref, watch } from '@common/utils/vueTools'
+import { ref, computed, watch } from '@common/utils/vueTools'
 import { listDetailInfo } from '@renderer/store/songList/state'
 import { setVisibleListDetail } from '@renderer/store/songList/action'
 import { useRouter } from '@common/utils/vueRouter'
+import music from '@renderer/utils/musicSdk'
 import { addSongListDetail, playSongListDetail } from './action'
 import useList from './useList'
 import useKeyBack from './useKeyBack'
@@ -121,6 +135,60 @@ export default {
       void getListData(source.value, id.value, page, refresh.value)
     }
 
+    // 歌手详情：额外加载该歌手的全部专辑
+    interface AlbumItem {
+      id?: string | number
+      mid?: string
+      count?: number
+      time?: string
+      info?: {
+        name?: string
+        img?: string
+      }
+    }
+    interface SingerApi {
+      getAlbumList?: (id: string, page?: number, limit?: number) => Promise<{ list?: AlbumItem[] }>
+    }
+    const albums = ref<Array<{ id: string, name: string, img: string, count: number | null, time: string }>>([])
+    const isArtist = computed(() => typeof id.value == 'string' && id.value.startsWith('artist__'))
+
+    const getAlbumRouteId = (item: AlbumItem) => {
+      // kw 专辑详情走 digest-13 路由，tx 需要用 albumMid
+      if (source.value == 'kw') return `digest-13__${item.id}`
+      if (source.value == 'tx') return `album__${item.mid ?? item.id}`
+      return `album__${item.id}`
+    }
+
+    const loadAlbums = async() => {
+      albums.value = []
+      if (!isArtist.value) return
+      const singer = (music as unknown as Record<string, { singer?: SingerApi }>)[source.value]?.singer
+      if (!singer || typeof singer.getAlbumList != 'function') return
+      try {
+        const res = await singer.getAlbumList(id.value.slice(8), 1, 100)
+        albums.value = (res?.list ?? []).map(item => ({
+          id: getAlbumRouteId(item),
+          name: item.info?.name ?? '',
+          img: item.info?.img ?? '',
+          count: item.count ?? null,
+          time: item.time ?? '',
+        }))
+      } catch (err) {
+        console.warn(err)
+      }
+    }
+
+    const toAlbum = (album: { id: string, img: string }) => {
+      void router.push({
+        path: '/songList/detail',
+        query: {
+          source: source.value,
+          id: album.id,
+          picUrl: album.img,
+        },
+      })
+    }
+
     const handleBack = () => {
       setVisibleListDetail(false)
       if (window.lx.songListInfo.fromName) void router.replace({ name: window.lx.songListInfo.fromName })
@@ -137,6 +205,7 @@ export default {
       // refresh.value = _refresh
       // page.value = _page ?? 1
       void getListData(_source, _id, _page, _refresh)
+      void loadAlbums()
     }, {
       immediate: true,
     })
@@ -146,6 +215,9 @@ export default {
       id,
       page,
       picUrl,
+      albums,
+      isArtist,
+      toAlbum,
       listDetailInfo,
       listRef,
       togglePage,
@@ -236,6 +308,63 @@ export default {
       border-top-right-radius: 4px;
       border-bottom-right-radius: 4px;
     }
+  }
+}
+
+.albumSection {
+  flex: none;
+  padding: 0 15px;
+}
+.albumTitle {
+  font-size: 12px;
+  line-height: 1.4;
+  padding-bottom: 6px;
+  color: var(--color-font-label);
+}
+.albumList {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+}
+.albumItem {
+  flex: none;
+  width: 84px;
+  cursor: pointer;
+  transition: opacity @transition-normal;
+  &:hover {
+    opacity: .7;
+  }
+}
+.albumImg {
+  display: block;
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 4px;
+  background-color: var(--color-000);
+  box-shadow: 0 0 2px 0 rgba(0,0,0,.2);
+}
+.albumName {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--color-font);
+  .mixin-ellipsis-1();
+}
+.albumMeta {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--color-font-label);
+  .mixin-ellipsis-1();
+  span {
+    display: inline-flex;
+    align-items: center;
   }
 }
 

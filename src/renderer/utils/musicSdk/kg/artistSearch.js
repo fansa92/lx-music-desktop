@@ -1,6 +1,5 @@
 import { httpFetch } from '../../request'
 import { createHttpFetch } from './util'
-import { formatPlayCount } from '../../index'
 
 /**
  * 获取歌手头像、歌曲数等信息
@@ -14,6 +13,7 @@ const getSingerExtraInfo = async(singerid) => {
     return {
       img: body.imgurl ? body.imgurl.replace('{size}', 240) : null,
       total: body.songcount ?? 0,
+      albumTotal: body.albumcount ?? 0,
       desc: body.intro ?? '',
     }
   } catch {
@@ -33,13 +33,14 @@ export default {
     const list = await Promise.all(info.map(async item => {
       const extra = await getSingerExtraInfo(item.singerid)
       return {
-        play_count: formatPlayCount(0),
+        play_count: null,
         id: `artist__${item.singerid}`,
         author: '',
         name: item.singername,
         time: '',
         img: extra.img ?? null,
         total: extra.total ?? 0,
+        album_total: extra.albumTotal ?? 0,
         desc: extra.desc ?? '',
         source: 'kg',
       }

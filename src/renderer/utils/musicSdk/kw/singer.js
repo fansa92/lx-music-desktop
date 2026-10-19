@@ -70,12 +70,45 @@ export default {
         info: {
           name: artistName || artistInfo.name,
           img: artistInfo.img || '',
-          desc: '',
+          // artistinfo 的 info/desc 就是歌手简介
+          desc: artistInfo.desc || '',
           author: artistName || artistInfo.name,
           play_count: '',
         },
       }))
     })
+  },
+  /**
+   * 获取歌手专辑列表
+   * kw 没有按 artistid 取专辑的可用接口，改为按歌手名检索专辑，再用 artistid 过滤
+   * @param {*} id
+   * @param {*} page
+   * @param {*} limit
+   */
+  getAlbumList(id, page = 1, limit = 50) {
+    return this.getArtistInfo(id).then(artistInfo => {
+      const name = artistInfo.name
+      if (!name) return { list: [], total: 0, limit, page, source: 'kw' }
+      return httpFetch(`http://search.kuwo.cn/r.s?all=${encodeURIComponent(name)}&ft=album&pn=${page - 1}&rn=${limit}&rformat=json&encoding=utf8&plat=pc&devid=28156413`)
+        .promise.then(({ body }) => {
+          body = objStr2JSON(body)
+          const raw = (body && body.albumlist) || []
+          const filterList = item => String(item.artistid) === String(id)
+          const matched = raw.filter(filterList)
+          // 过滤后为空时退回未过滤结果，避免同名/合作专辑被全部丢弃
+          const list = (matched.length ? matched : raw).map(item => ({
+            id: item.albumid,
+            count: parseInt(item.musiccnt) || 0,
+            info: {
+              name: decodeName(item.name),
+              author: decodeName(item.artist),
+              img: item.hts_img || item.img,
+              desc: decodeName(item.info),
+            },
+          }))
+          return { list, total: list.length, limit, page, source: 'kw' }
+        })
+    }).catch(() => ({ list: [], total: 0, limit, page, source: 'kw' }))
   },
   getArtistInfo(id) {
     return httpFetch(`http://search.kuwo.cn/r.s?stype=artistinfo&artistid=${id}&rformat=json&encoding=utf8&plat=pc&devid=28156413`)
@@ -87,7 +120,8 @@ export default {
         return {
           name: decodeName(body.name || body.artist),
           img,
+          desc: decodeName(body.info || body.desc),
         }
-      }).catch(() => ({ name: '', img: '' }))
+      }).catch(() => ({ name: '', img: '', desc: '' }))
   },
 }

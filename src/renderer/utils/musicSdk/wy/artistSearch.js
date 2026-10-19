@@ -1,5 +1,4 @@
 import { eapiRequest } from './utils/index'
-import { formatPlayCount } from '../../index'
 
 export default {
   limit: 20,
@@ -15,13 +14,14 @@ export default {
       const artists = (body.result && body.result.artists) || []
       return {
         list: artists.map(item => ({
-          play_count: formatPlayCount(item.musicSize ?? 0),
+          play_count: null,
           id: `artist__${item.id}`,
           author: (item.alias && item.alias.length ? item.alias.join(' / ') : '') || (item.trans || ''),
           name: item.name,
           time: '',
           img: item.picUrl,
           total: item.musicSize,
+          album_total: item.albumSize ?? 0,
           desc: '',
           source: 'wy',
         })),

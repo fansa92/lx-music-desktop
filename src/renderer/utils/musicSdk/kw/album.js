@@ -1,5 +1,5 @@
 import { httpFetch } from '../../request'
-import { decodeName } from '../../index'
+import { decodeName, formatPlayTime } from '../../index'
 import { formatSinger, objStr2JSON } from './util'
 
 // let requestObj_list
@@ -57,7 +57,8 @@ export default {
         albumId,
         songmid: item.id,
         source: 'kw',
-        interval: null,
+        // albuminfo 返回的 duration 为秒数字符串，此前写死 null 导致详情页不显示时长
+        interval: formatPlayTime(parseInt(item.duration) || 0),
         img: item.pic,
         lrc: null,
         otherSource: null,

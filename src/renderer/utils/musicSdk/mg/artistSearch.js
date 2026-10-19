@@ -1,5 +1,4 @@
 import { createHttpFetch } from './utils'
-import { formatPlayCount } from '../../index'
 
 export default {
   limit: 20,
@@ -10,13 +9,14 @@ export default {
         const result = body.singerResultData.result || []
         return {
           list: result.map(item => ({
-            play_count: formatPlayCount(0),
+            play_count: null,
             id: `artist__${item.id}`,
             author: '',
             name: item.name,
             time: '',
             img: null,
-            total: 0,
+            // mg 没有可用的歌手统计接口（相关路由均返回 299996），这里留空避免显示错误的 0
+            total: null,
             desc: '',
             source: 'mg',
           })),
