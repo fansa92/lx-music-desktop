@@ -1,5 +1,5 @@
 import { eapiRequest } from './utils/index'
-import { decodeName, formatPlayCount, dateFormat } from '../../index'
+import { formatPlayCount, dateFormat } from '../../index'
 
 export default {
   limit: 20,

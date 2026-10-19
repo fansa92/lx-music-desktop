@@ -303,7 +303,7 @@ export default {
   async getListDetail(id, tryNum = 0) {
     if (tryNum > 2) return Promise.reject(new Error('try max num'))
     if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(8))
-    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page)
+    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8))
 
     id = await this.getListId(id)
 

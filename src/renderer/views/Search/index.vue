@@ -62,13 +62,13 @@ const verifyQueryParams = async(to, from, next) => {
 }
 
 export default {
-    components: {
-      MusicList,
-      SongListList,
-      AlbumList,
-      ArtistList,
-      BlankView,
-    },
+  components: {
+    MusicList,
+    SongListList,
+    AlbumList,
+    ArtistList,
+    BlankView,
+  },
   beforeRouteEnter: verifyQueryParams,
   beforeRouteUpdate: verifyQueryParams,
   setup() {

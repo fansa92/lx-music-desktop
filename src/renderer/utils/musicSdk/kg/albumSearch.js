@@ -1,5 +1,5 @@
 import { httpFetch } from '../../request'
-import { decodeName, formatPlayCount, dateFormat } from '../../index'
+import { formatPlayCount, dateFormat } from '../../index'
 
 export default {
   limit: 20,

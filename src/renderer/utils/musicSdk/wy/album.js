@@ -49,14 +49,14 @@ export default {
         }
         switch (privilege.maxbr) {
           case 999000:
-            { const size = null; types.push({ type: 'flac', size }); _types.flac = { size } }
-            // eslint-disable-next-line no-fallthrough
+          { const size = null; types.push({ type: 'flac', size }); _types.flac = { size } }
+          // eslint-disable-next-line no-fallthrough
           case 320000:
-            { const size = item.h ? sizeFormate(item.h.size) : null; types.push({ type: '320k', size }); _types['320k'] = { size } }
-            // eslint-disable-next-line no-fallthrough
+          { const size = item.h ? sizeFormate(item.h.size) : null; types.push({ type: '320k', size }); _types['320k'] = { size } }
+          // eslint-disable-next-line no-fallthrough
           case 192000:
           case 128000:
-            { const size = item.l ? sizeFormate(item.l.size) : null; types.push({ type: '128k', size }); _types['128k'] = { size } }
+          { const size = item.l ? sizeFormate(item.l.size) : null; types.push({ type: '128k', size }); _types['128k'] = { size } }
         }
         types.reverse()
       }

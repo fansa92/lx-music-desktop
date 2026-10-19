@@ -1,5 +1,5 @@
 import { httpFetch } from '../../request'
-import { decodeName, formatPlayCount } from '../../index'
+import { decodeName } from '../../index'
 import { objStr2JSON } from './util'
 
 export default {

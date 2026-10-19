@@ -1,5 +1,5 @@
 import { createHttpFetch } from './utils'
-import { decodeName, formatPlayCount } from '../../index'
+import { formatPlayCount } from '../../index'
 
 export default {
   limit: 20,
