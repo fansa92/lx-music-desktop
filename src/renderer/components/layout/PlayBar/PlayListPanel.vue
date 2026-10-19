@@ -76,7 +76,7 @@ export default {
     let shouldScrollToCurrent = false
 
     // playerListId 在某些播放路径下可能为空，兜底用当前播放歌曲所属的列表
-    const listId = computed(() => playInfo.playerListId || playMusicInfo.listId || null)
+    const listId = computed(() => playInfo.playerListId ?? playMusicInfo.listId ?? null)
     // 下载列表的歌曲是 LX.Download.ListItem，删除走的是下载模块，这里不提供移除按钮
     const canRemove = computed(() => !!listId.value && listId.value != LIST_IDS.DOWNLOAD)
     const itemHeight = computed(() => Math.ceil((isFullscreen.value ? getFontSizeWithScreen() : appSetting['common.fontSize']) * 2.3))
