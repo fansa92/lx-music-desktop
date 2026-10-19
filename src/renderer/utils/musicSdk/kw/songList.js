@@ -2,6 +2,7 @@ import { httpFetch } from '../../request'
 import { formatPlayTime, decodeName } from '../../index'
 import { formatSinger, objStr2JSON } from './util'
 import album from './album'
+import singer from './singer'
 
 export default {
   _requestObj_tags: null,
@@ -375,6 +376,7 @@ export default {
     // console.log(id)
     // https://h5app.kuwo.cn/m/bodian/collection.html?uid=000&playlistId=000&source=5&ownerId=000
     // https://h5app.kuwo.cn/m/bodian/collection.html?uid=000&playlistId=000&source=4&ownerId=
+    if (id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page, retryNum)
     if (/\/bodian\//.test(id)) return this.getListDetailMusicListByBD(id, page)
     if ((/[?&:/]/.test(id))) id = id.replace(this.regExps.listDetailLink, '$1')
     else if (/^digest-/.test(id)) {

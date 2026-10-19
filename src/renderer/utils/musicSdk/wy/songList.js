@@ -9,6 +9,8 @@ import { formatPlayTime, sizeFormate, dateFormat, formatPlayCount } from '../../
 import musicDetailApi from './musicDetail'
 import { eapiRequest } from './utils/index'
 import { formatSingerName } from '../utils'
+import album from './album'
+import singer from './singer'
 
 export default {
   _requestObj_tags: null,
@@ -67,6 +69,8 @@ export default {
   },
   async getListDetail(rawId, page, tryNum = 0) { // 获取歌曲列表内的音乐
     if (tryNum > 2) return Promise.reject(new Error('try max num'))
+    if (typeof rawId == 'string' && rawId.startsWith('album__')) return album.getAlbumDetail(rawId.slice(8), page)
+    if (typeof rawId == 'string' && rawId.startsWith('artist__')) return singer.getArtistDetail(rawId.slice(8), page)
 
     const { id, cookie } = await this.getListId(rawId)
     if (cookie) this.cookie = cookie

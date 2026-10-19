@@ -6,6 +6,8 @@
     </div>
     <div :class="$style.main">
       <song-list-list v-if="searchType == 'songlist'" v-show="searchText" :page="page" :source-id="source" />
+      <album-list v-else-if="searchType == 'album'" v-show="searchText" :page="page" :source-id="source" />
+      <artist-list v-else-if="searchType == 'artist'" v-show="searchText" :page="page" :source-id="source" />
       <music-list v-else v-show="searchText" :page="page" :source-id="source" />
       <blank-view :visible="!searchText" :source="source" />
     </div>
@@ -20,6 +22,8 @@ import { sources as _sources } from '@renderer/store/search/music'
 
 import MusicList from './MusicList/index.vue'
 import SongListList from './SongListList/index.vue'
+import AlbumList from './AlbumList/index.vue'
+import ArtistList from './ArtistList/index.vue'
 import BlankView from './components/BlankView.vue'
 import { computed, ref } from '@common/utils/vueTools'
 import { sourceNames } from '@renderer/store'
@@ -58,11 +62,13 @@ const verifyQueryParams = async(to, from, next) => {
 }
 
 export default {
-  components: {
-    MusicList,
-    SongListList,
-    BlankView,
-  },
+    components: {
+      MusicList,
+      SongListList,
+      AlbumList,
+      ArtistList,
+      BlankView,
+    },
   beforeRouteEnter: verifyQueryParams,
   beforeRouteUpdate: verifyQueryParams,
   setup() {
@@ -90,6 +96,8 @@ export default {
       return [
         { label: window.i18n.t('search__type_music'), id: 'music' },
         { label: window.i18n.t('search__type_songlist'), id: 'songlist' },
+        { label: window.i18n.t('search__type_album'), id: 'album' },
+        { label: window.i18n.t('search__type_artist'), id: 'artist' },
       ]
     })
     const handleTypeChange = (type) => {

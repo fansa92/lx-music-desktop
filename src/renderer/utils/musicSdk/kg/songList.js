@@ -2,6 +2,8 @@ import { httpFetch } from '../../request'
 import { decodeName, formatPlayTime, sizeFormate, dateFormat, formatPlayCount } from '../../index'
 import infSign from '@renderer/utils/musicSdk/kg/vendors/infSign.min'
 import { signatureParams } from './util'
+import album from './album'
+import singer from './singer'
 
 const handleSignature = (id, page, limit) => new Promise((resolve, reject) => {
   infSign({ appid: 1058, type: 0, module: 'playlist', page, pagesize: limit, specialid: id }, null, {
@@ -737,6 +739,8 @@ export default {
   },
 
   async getListDetail(id, page) { // 获取歌曲列表内的音乐
+    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(8), page)
+    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page)
     id = id.toString()
     if (id.includes('special/single/')) {
       id = id.replace(this.regExps.listDetailLink, '$1')

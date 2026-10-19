@@ -7,6 +7,9 @@ import lyric from './lyric'
 import pic from './pic'
 import { apis } from '../api-source'
 import songList from './songList'
+import albumSearch from './albumSearch'
+import artistSearch from './artistSearch'
+import singer from './singer'
 import hotSearch from './hotSearch'
 import comment from './comment'
 
@@ -36,6 +39,9 @@ const kw = {
   musicSearch,
   leaderboard,
   songList,
+  albumSearch,
+  artistSearch,
+  singer,
   hotSearch,
   comment,
   getLyric(songInfo, isGetLyricx) {

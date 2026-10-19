@@ -1,6 +1,8 @@
 import { httpFetch } from '../../request'
 import { decodeName, formatPlayTime, sizeFormate, dateFormat, formatPlayCount } from '../../index'
 import { formatSingerName } from '../utils'
+import album from './album'
+import singer from './singer'
 
 export default {
   _requestObj_tags: null,
@@ -300,6 +302,8 @@ export default {
   // 获取歌曲列表内的音乐
   async getListDetail(id, tryNum = 0) {
     if (tryNum > 2) return Promise.reject(new Error('try max num'))
+    if (typeof id == 'string' && id.startsWith('album__')) return album.getAlbumDetail(id.slice(8))
+    if (typeof id == 'string' && id.startsWith('artist__')) return singer.getArtistDetail(id.slice(8), page)
 
     id = await this.getListId(id)
 

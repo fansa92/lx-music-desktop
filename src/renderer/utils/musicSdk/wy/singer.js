@@ -8,7 +8,7 @@ export default {
    * @param {*} id
    */
   getInfo(id) {
-    return eapiRequest('/api/artist/head/info/get', { id }).then(({ body }) => {
+    return eapiRequest('/api/artist/head/info/get', { id }).promise.then(({ body }) => {
       if (!body || body.code != 200) throw new Error('get singer info faild.')
       return {
         source: 'wy',
@@ -38,7 +38,7 @@ export default {
       id,
       limit,
       offset: limit * page,
-    }).then(({ body }) => {
+    }).promise.then(({ body }) => {
       if (!body.songs || body.code != 200) throw new Error('get singer song list faild.')
 
       const list = this.filterSongList(body.songs)
@@ -50,6 +50,29 @@ export default {
         source: 'wy',
       }
     })
+  },
+  async getArtistDetail(id, page = 1, limit = 100) {
+    if (page === 1) page = 0
+    const [songData, infoData] = await Promise.all([
+      this.getSongList(id, page, limit).catch(() => null),
+      this.getInfo(id).catch(() => null),
+    ])
+    const info = infoData?.info || {}
+    const songData_ = songData || { list: [], page, limit, total: 0 }
+    return {
+      list: songData_.list,
+      page: songData_.page ?? page,
+      limit: songData_.limit ?? limit,
+      total: songData_.total ?? 0,
+      source: 'wy',
+      info: {
+        name: info.name || '',
+        img: info.avatar || '',
+        desc: info.desc || '',
+        author: info.name || '',
+        play_count: '',
+      },
+    }
   },
   /**
    * 获取歌手专辑列表

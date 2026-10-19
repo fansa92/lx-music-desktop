@@ -225,6 +225,28 @@ export default {
       }
     })
   },
+  async getArtistDetail(id, page = 1, limit = 100) {
+    const [songData, infoData] = await Promise.all([
+      this.getSongList(id, page, limit).catch(() => null),
+      this.getInfo(id).catch(() => null),
+    ])
+    const info = infoData?.info || {}
+    const songData_ = songData || { list: [], page, limit, total: 0 }
+    return {
+      list: songData_.list,
+      page: songData_.page ?? page,
+      limit: songData_.limit ?? limit,
+      total: songData_.total ?? 0,
+      source: 'tx',
+      info: {
+        name: info.name || '',
+        img: info.avatar || '',
+        desc: info.desc || '',
+        author: info.name || '',
+        play_count: '',
+      },
+    }
+  },
   filterAlbumList(raw) {
     return raw.map(item => {
       return {
