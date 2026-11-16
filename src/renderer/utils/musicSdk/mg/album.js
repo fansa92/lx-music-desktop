@@ -9,6 +9,8 @@ export default {
    * @param {*} page
    */
   async getAlbumDetail(id, page = 1) {
+    // 专辑搜索/歌手专辑列表的 id 带 `album__` 路由前缀，取详情前需剥离
+    if (typeof id == 'string' && id.startsWith('album__')) return this.getAlbumDetail(id.slice(7), page)
     // 数字专辑（咪咕数专）歌曲不下发，只能取到专辑信息
     if (typeof id == 'string' && id.startsWith('dalbum__')) return this.getDAlbumDetail(id.slice(8), page)
     // 旧端点 queryAlbumSong（MIGUM2.0/app.c.nf）已失效（返回空 data），改用 MIGUM3.0 resource/album/song

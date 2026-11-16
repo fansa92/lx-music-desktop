@@ -8,6 +8,7 @@ import {
   addListMusics as addListMusicsAction,
   moveListMusics as moveListMusicsAction,
   overwriteListMusics,
+  overwriteMusicList,
 } from '@renderer/store/list/listManage'
 import { toRaw } from '@common/utils/vueTools'
 import { LIST_IDS } from '@common/constants'
@@ -78,9 +79,16 @@ export const createUserList = async({ name, id = `userlist_${Date.now()}`, list 
 
 export const setTempList = async(id: string, list: LX.Music.MusicInfoOnline[]) => {
   tempListMeta.id = id
+  // 调用方通常只做 `[...list]` 浅拷贝，元素可能还是 Vue 响应式代理，
+  // IPC 传输代理对象会序列化失败，播放队列里也需要存纯对象
+  const musicInfos: LX.Music.MusicInfo[] = list.map(item => toRaw(item))
+  // 播放队列（core/player 的 getList）是同步读本地缓存的，
+  // 若等主进程写完数据库再回传事件，随后的 playList(LIST_IDS.TEMP, index)
+  // 会读到空列表或上一个列表的歌曲，因此这里先同步覆盖本地缓存
+  overwriteMusicList(LIST_IDS.TEMP, musicInfos)
   await overwriteListMusics({
     listId: LIST_IDS.TEMP,
-    musicInfos: list,
+    musicInfos,
   })
 }
 

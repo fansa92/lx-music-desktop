@@ -11,6 +11,11 @@ export default ({ selectedList, props, removeAllSelect, emit }: {
   selectedList: Ref<LX.Music.MusicInfoOnline[]>
   props: {
     list: LX.Music.MusicInfoOnline[]
+    /**
+     * 是否把播放请求交给父组件处理（详情页会把当前列表写入临时列表后再播放），
+     * 搜索结果页、排行榜等场景保持默认的「加入试听列表」行为
+     */
+    playToTemp?: boolean
   }
   removeAllSelect: () => void
   emit: (event: 'show-menu' | 'play-list' | 'togglePage', ...args: any[]) => void
@@ -19,6 +24,13 @@ export default ({ selectedList, props, removeAllSelect, emit }: {
   let clickIndex = -1
 
   const handlePlayMusic = async(index: number, single: boolean) => {
+    // 详情页（专辑/歌手/歌单）内播放单曲时统一走临时列表：
+    // 由详情页把当前已加载的完整歌曲列表写入临时列表（TEMP）并从该位置开始播放，
+    // 保证播放队列与播放列表面板都是当前详情页的歌曲，而不是试听列表里的一首
+    if (props.playToTemp && !selectedList.value.length) {
+      emit('play-list', index)
+      return
+    }
     let targetSong = props.list[index]
     const defaultListMusics = await getListMusics(defaultList.id)
     if (selectedList.value.length && !single) {

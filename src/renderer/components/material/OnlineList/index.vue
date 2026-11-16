@@ -146,6 +146,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    // 详情页（专辑/歌手/歌单）使用：播放单曲时交给详情页写入临时列表（TEMP）后播放
+    playToTemp: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['show-menu', 'play-list', 'togglePage'],
   setup(props, { emit }) {

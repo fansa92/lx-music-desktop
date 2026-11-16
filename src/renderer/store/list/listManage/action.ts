@@ -21,7 +21,12 @@ export const setMusicList = (listId: string, musicList: LX.Music.MusicInfo[]) =>
   return list
 }
 
-const overwriteMusicList = (id: string, list: LX.Music.MusicInfo[]) => {
+/**
+ * 覆盖本地缓存中的列表歌曲（保持原数组引用，便于外部响应式更新）
+ * @param id 列表id
+ * @param list 歌曲列表
+ */
+export const overwriteMusicList = (id: string, list: LX.Music.MusicInfo[]) => {
   // console.log(id, list)
   markRawList(list)
   let targetList = allMusicList.get(id)
@@ -207,7 +212,9 @@ export const userListsUpdatePosition = (position: number, ids: string[]) => {
 export const listMusicOverwrite = (listId: string, musicInfos: LX.Music.MusicInfo[]): string[] => {
   const isExist = allMusicList.has(listId)
   overwriteMusicList(listId, musicInfos)
-  return isExist || listId == loveList.id ? [listId] : []
+  // 临时列表的内容被整体覆盖时，列表 id 不变但内容已变（切换专辑/歌手时列表 id 始终是 temp），
+  // 同样需要通知外部刷新播放索引与播放列表面板
+  return isExist || listId == loveList.id || listId == LIST_IDS.TEMP ? [listId] : []
 }
 
 export const listMusicClear = (ids: string[]): string[] => {

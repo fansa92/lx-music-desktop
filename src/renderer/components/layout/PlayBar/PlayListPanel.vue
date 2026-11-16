@@ -92,8 +92,8 @@ export default {
       const innerId = id.slice(index + 2)
       return innerId ? { source, id: innerId } : null
     }
-    // 专辑详情统一用 `album__` / `digest-13__`（kw）前缀标记
-    const isAlbumListId = (id) => id.startsWith('album__') || id.startsWith('digest-13__')
+    // 详情页统一用 `album__` / `dalbum__`（mg）/ `digest-13__`（kw 专辑）/ `artist__` 前缀标记
+    const isDetailListId = (id) => id.startsWith('album__') || id.startsWith('dalbum__') || id.startsWith('digest-13__') || id.startsWith('artist__')
     // 下载列表的歌曲是 LX.Download.ListItem，删除走的是下载模块，这里不提供移除按钮
     const canRemove = computed(() => !!listId.value && listId.value != LIST_IDS.DOWNLOAD)
     const itemHeight = computed(() => Math.ceil((isFullscreen.value ? getFontSizeWithScreen() : appSetting['common.fontSize']) * 2.3))
@@ -134,29 +134,35 @@ export default {
         list.value = downloadList
         return
       }
-      // 播放专辑时直接按专辑 id 取曲目（与歌单详情页同一套接口与缓存），
-      // 不依赖临时列表缓存，避免临时列表被其他列表覆盖后显示成别的歌曲
-      // 仅当播放队列确实是临时列表时才使用，避免残留的来源 id 干扰用户列表
+      // 播放队列就是本地缓存里的列表：setTempList 会先同步覆盖缓存再开始播放，
+      // 所以优先读缓存，面板的顺序与播放器完全一致
+      const cachedList = getListMusicsFromCache(id)
+      if (cachedList?.length) {
+        // 缓存数组是被原地覆盖的（splice），这里给一个新数组，确保面板重新渲染
+        list.value = [...cachedList]
+        return
+      }
+      // 缓存为空时（如冷启动后恢复播放队列）再按来源详情接口兜底：
+      // 专辑/歌手详情与详情页共用同一套接口与缓存，直接按来源 id 取曲目
       const targetSourceListId = id == LIST_IDS.TEMP ? sourceListId.value : null
       const onlineInfo = parseOnlineListId(targetSourceListId)
-      if (onlineInfo && isAlbumListId(onlineInfo.id)) {
+      if (onlineInfo && isDetailListId(onlineInfo.id)) {
         try {
           const result = await getListDetail(onlineInfo.id, onlineInfo.source, 1)
           if (targetSourceListId != sourceListId.value) return
-          list.value = result.list ?? []
-          // 专辑曲目较多时会分页，后台补全剩余部分
+          list.value = [...(result.list ?? [])]
+          // 专辑/歌手曲目较多时会分页，后台补全剩余部分
           if (result.total > (result.list?.length ?? 0)) {
             const fullList = await getListDetailAll(onlineInfo.id, onlineInfo.source)
             if (targetSourceListId != sourceListId.value) return
-            list.value = fullList
+            list.value = [...fullList]
           }
           return
         } catch (err) {
           console.warn(err)
         }
       }
-      // 与播放器播放时取列表的方式保持一致（同步缓存），保证拿到的就是当前播放的列表
-      let musics = getListMusicsFromCache(id)
+      let musics = cachedList
       if (!musics?.length) {
         try {
           musics = await getListMusics(id)
@@ -166,7 +172,7 @@ export default {
       }
       // 列表可能已经通过事件被更新过，这里再取一次缓存兜底
       if (!musics?.length) musics = getListMusicsFromCache(id)
-      list.value = musics ?? []
+      list.value = [...(musics ?? [])]
     }
 
     const scrollToCurrent = () => {
@@ -250,7 +256,20 @@ export default {
       void nextTick(() => requestAnimationFrame(scrollToCurrent))
     })
 
+    // 临时列表的内容被整体覆盖时列表 id 不变（切换专辑/歌手后播放队列仍是 temp），
+    // 只能靠列表变更事件感知。面板打开期间收到事件就重新拉取，
+    // 避免继续显示上一张专辑/上一个歌手的歌曲（也覆盖「先播放第一页，随后补全全部歌曲」的情况）
+    const handleListUpdate = (ids) => {
+      const id = listId.value
+      if (!id || !Array.isArray(ids) || !ids.includes(id)) return
+      if (!visible.value) return
+      shouldScrollToCurrent = true
+      void loadList()
+    }
+    window.app_event.on('myListUpdate', handleListUpdate)
+
     onBeforeUnmount(() => {
+      window.app_event.off('myListUpdate', handleListUpdate)
       document.removeEventListener('click', handleOutsideClick, true)
       document.removeEventListener('keydown', handleKeydown)
     })

@@ -28,7 +28,9 @@ export default () => {
     }
     list = await getListDetailAll(id, source)
     if (isPlayingList) {
-      if (tempListMeta.id == id) await setTempList(playListId, list)
+      // 这里比较的必须是 setTempList 写入的列表 id（`${source}__${id}`），
+      // 否则条件恒不成立，补全后的完整歌曲列表不会被写回临时列表
+      if (tempListMeta.id == playListId) await setTempList(playListId, list)
     } else {
       await setTempList(playListId, list)
       playList(tempList.id, getListPlayIndex(list, playIndex))

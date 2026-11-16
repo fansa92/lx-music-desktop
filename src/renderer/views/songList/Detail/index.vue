@@ -42,6 +42,7 @@
         :total="listDetailInfo.total"
         :list="listDetailInfo.list"
         :no-item="listDetailInfo.noItemLabel"
+        play-to-temp
         @play-list="handlePlayList"
         @toggle-page="togglePage"
       />
